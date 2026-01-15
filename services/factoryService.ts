@@ -79,14 +79,23 @@ export class NexusProfileFactory {
                     this.addLog(`DEBUG [Row ${index + 2}]: Cols=${row.length} Data=[${row.join('|')}]`);
                 }
 
-                // チェックボックスは通常 'TRUE' 文字列として返るが、
-                // 万が一のズレを考慮して D列(row[3]) 以外もチェック可能に
+                // チェックボックスは通常 'TRUE' 文字列として返る
                 const isTriggered = row.some((cell: any) => cell === 'TRUE');
 
+                // デバッグログ「Data=[||FALSE|gmail|seed|name|...]」に基づいたマッピング
+                // インデックス 0:空, 1:空, 2:チェック, 3:Gmail, 4:Seed, 5:Name
+                const gmail = row[3] || "";
+                const seed = row[4] || "";
+                const name = row[5] || "不明なユーザー";
+
+                if (isTriggered) {
+                    this.addLog(`捕捉 [Row ${index + 2}]: Name=${name}, Seed=${seed}`);
+                }
+
                 return {
-                    gmail: row[0] || "",
-                    seed: row[1] || "",
-                    name: row[2] || "不明なユーザー",
+                    gmail: gmail,
+                    seed: seed,
+                    name: name,
                     isTriggered: isTriggered,
                     rowIndex: index + 2
                 };

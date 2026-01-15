@@ -10,11 +10,11 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     define: {
-      // ↓↓↓ Google Cloud で発行した クライアントID をここに貼り付けてください ↓↓↓
+      // Google Cloud で発行した クライアントID
       'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('2857768732-0211p2kcio5mscjk8aho6i0qrb6l033c.apps.googleusercontent.com'),
-      // Gemini API Key
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify('AIzaSyAfmohMRf8gckrlSzA-xUWalzLB_Co_e6s'),
-      // Google Client Secret (本来はバックエンドで管理すべきですが、現状維持)
+      // ↓↓↓ Gemini API Key をここに貼り付けてください ↓↓↓
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify('YOUR_GEMINI_API_KEY_HERE'),
+      // Google Client Secret
       'import.meta.env.VITE_GOOGLE_CLIENT_SECRET': JSON.stringify('GOCSPX-HdaZnc1xkcVQpAHEH52v--aWkoV'),
     },
     plugins: [react()],
