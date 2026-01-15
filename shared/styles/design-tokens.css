@@ -1,0 +1,271 @@
+:root {
+    /* Digital Nexus Expansion Palette */
+    --digital-flow-magenta: #E6007E;
+    --digital-flow-cyan: #009FE3;
+    --deep-blue: #002D56;
+    --pure-white: #FFFFFF;
+    --light-gray: #F2F2F2;
+
+    /* Gradations (Digital Flow Gradient) */
+    --digital-flow-gradient: linear-gradient(135deg, var(--digital-flow-magenta) 0%, var(--digital-flow-cyan) 100%);
+    --white-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 1) 100%);
+
+    /* Typography */
+    --font-main: 'Inter', 'Noto Sans JP', sans-serif;
+    --font-hero: 'Montserrat', 'DIN Alternate', sans-serif;
+
+    /* Spacing & Borders */
+    --radius-card: 12px;
+    --radius-pill: 9999px;
+    --border-nexus: 0.5px solid rgba(0, 45, 86, 0.1);
+    --border-gradient: linear-gradient(135deg, rgba(230, 0, 126, 0.3), rgba(0, 159, 227, 0.3));
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--light-gray);
+    color: var(--deep-blue);
+    font-family: var(--font-main);
+    line-height: 1.6;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(230, 0, 126, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0, 159, 227, 0.05) 0%, transparent 40%);
+    overscroll-behavior-y: none;
+    /* Disable pull-to-refresh in browser */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* iOS Safe Area Support */
+.safe-area-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app-container {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+
+.touch-feedback {
+    transition: transform 0.1s, opacity 0.1s;
+}
+
+.touch-feedback:active {
+    opacity: 0.8;
+}
+
+.nexus-card {
+    background: var(--pure-white);
+    border: var(--border-nexus);
+    border-radius: var(--radius-card);
+    box-shadow: 0 10px 30px rgba(0, 45, 86, 0.05);
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (max-width: 600px) {
+    .nexus-card {
+        padding: 1.5rem;
+    }
+}
+
+.nexus-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--digital-flow-gradient);
+}
+
+.heroic-number {
+    font-family: var(--font-hero);
+    font-weight: 900;
+    font-size: clamp(2.5rem, 15vw, 5rem);
+    line-height: 1;
+    background: var(--digital-flow-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 1rem 0;
+    letter-spacing: -2px;
+}
+
+.viral-button {
+    background: var(--digital-flow-gradient);
+    color: var(--pure-white);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 1rem 2rem;
+    font-weight: 800;
+    font-family: var(--font-hero);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(230, 0, 126, 0.3);
+}
+
+.viral-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(230, 0, 126, 0.4);
+}
+
+.ripple-effect {
+    position: absolute;
+    border: 1px solid rgba(0, 159, 227, 0.1);
+    border-radius: 50%;
+    animation: ripple 4s infinite linear;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.animate-slide-in {
+    animation: slideInRight 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.glass-morphism {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.scroll-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scroll-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.nexus-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 45, 86, 0.1);
+    background: var(--light-gray);
+    color: var(--deep-blue);
+    font-family: var(--font-main);
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.nexus-input:focus {
+    outline: none;
+    border-color: var(--digital-flow-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 159, 227, 0.1);
+}
+
+/* Tooltip System */
+.nexus-tooltip {
+    position: absolute;
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(0, 45, 86, 0.95);
+    color: #fff;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+    width: 240px;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 10px 25px rgba(0, 45, 86, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    white-space: normal;
+}
+
+.nexus-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0, 45, 86, 0.95) transparent transparent transparent;
+}
+
+.tooltip-trigger {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip-trigger:hover .nexus-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0, 159, 227, 0.1);
+    color: var(--digital-flow-cyan);
+    font-size: 10px;
+    font-weight: 900;
+    margin-left: 6px;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.info-icon:hover {
+    background: var(--digital-flow-cyan);
+    color: #fff;
+}
