@@ -1,4 +1,3 @@
-import React from 'react';
 import { Shield, Smartphone, Zap, ArrowRight, LayoutDashboard, Database } from 'lucide-react';
 
 interface NexusPortalProps {
@@ -205,56 +204,6 @@ const NexusPortal: React.FC<NexusPortalProps> = ({ onNavigate, isProAuthorized }
                     </div>
                 </div>
 
-                {/* Ecosystem Overview / Database Card */}
-                <div
-                    className="nexus-card"
-                    style={{
-                        animation: 'fadeIn 1s ease-out forwards',
-                        background: 'linear-gradient(180deg, var(--deep-blue) 0%, #001a33 100%)',
-                        color: '#fff',
-                        border: 'none'
-                    }}
-                >
-                    <div style={{
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: '1.5rem'
-                    }}>
-                        <Database color="#fff" size={24} />
-                    </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem' }}>Ecosystem Status</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
-                            <span style={{ opacity: 0.6 }}>Carrier Database</span>
-                            <span style={{ fontWeight: 800, color: '#00ff88' }}>OPTIMIZED</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
-                            <span style={{ opacity: 0.6 }}>AI Analysis Engine</span>
-                            <span style={{ fontWeight: 800, color: '#00ff88' }}>ACTIVE</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                            <span style={{ opacity: 0.6 }}>Sync Protocol</span>
-                            <span style={{ fontWeight: 800, color: 'var(--digital-flow-cyan)' }}>LOCAL STORAGE</span>
-                        </div>
-                    </div>
-                    <div style={{
-                        marginTop: '2rem',
-                        padding: '1rem',
-                        background: 'rgba(255,255,255,0.05)',
-                        borderRadius: '8px',
-                        fontSize: '0.7rem',
-                        lineHeight: 1.4,
-                        opacity: 0.8
-                    }}>
-                        <Zap size={14} style={{ marginBottom: '5px' }} /> <br />
-                        全ての計算はデバイス上で完結し、最高速度のシミュレーション環境を提供します。
-                    </div>
-                </div>
                 {/* Nexus Profile Factory Card */}
                 <div
                     onClick={() => onNavigate('FACTORY')}
