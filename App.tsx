@@ -141,6 +141,25 @@ const App: React.FC = () => {
         )}
         {appMode === 'FACTORY' && (
           <div className="animate-fade-in" style={{ paddingBottom: '5rem' }}>
+            <div style={{ maxWidth: '1100px', margin: '1rem auto', display: 'flex', justifyContent: 'flex-start' }}>
+              <button
+                onClick={() => setAppMode('PORTAL')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--deep-blue)',
+                  opacity: 0.5,
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Home size={14} /> ポータルに戻る
+              </button>
+            </div>
             <NexusProfileFactory />
           </div>
         )}
