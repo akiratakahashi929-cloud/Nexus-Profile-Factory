@@ -83,7 +83,8 @@ export const generate2026OptimizedPosts = async (config: GenerationConfig): Prom
       },
     });
 
-    const posts = JSON.parse(textResponse.text || '[]') as GeneratedPost[];
+    const responseText = typeof textResponse.text === 'function' ? textResponse.text() : textResponse.text;
+    const posts = JSON.parse(responseText || '[]') as GeneratedPost[];
 
     if (shouldGenerateImage) {
       const postsWithImages = await Promise.all(posts.map(async (post) => {
