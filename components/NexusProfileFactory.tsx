@@ -24,12 +24,16 @@ const NexusProfileFactory: React.FC = () => {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
         if (!clientId) {
             addLog("【！】VITE_GOOGLE_CLIENT_ID が設定されていません。Vercelの環境変数を確認してください。");
-            alert("システムエラー: クライアントIDが未設定です。管理者に連絡してください。");
             return;
         }
 
-        addLog(`認証試行中... (オリジン: ${window.location.origin})`);
-        addLog("※このオリジンを Google Cloud Console の '承認済みの JavaScript オリジン' に登録する必要があります。");
+        const currentOrigin = window.location.origin;
+        addLog(`認証試行中... (オリジン: ${currentOrigin})`);
+
+        // プレビューURLなどでアクセスしている場合に警告
+        if (!currentOrigin.includes('nexus-profile-factory-7z1f.vercel.app')) {
+            addLog("【⚠️警告】本番用URL以外でアクセスしています。Google Cloud側でこのURLも許可する必要があります。");
+        }
 
         try {
             const client = (window as any).google.accounts.oauth2.initTokenClient({
@@ -40,16 +44,19 @@ const NexusProfileFactory: React.FC = () => {
                         setGoogleToken(response.access_token);
                         addLog("Google 認証成功。ファクトリーの制御権を取得しました。");
                     } else if (response.error) {
-                        addLog(`【！】認証エラー: ${response.error}`);
+                        addLog(`【❌】認証エラー: ${response.error}`);
+                        if (response.error === 'idpiframe_initialization_failed') {
+                            addLog("※シークレットモードやサードパーティCookie拒否が原因の可能性があります。");
+                        }
                     }
                 },
                 error_callback: (err: any) => {
-                    addLog(`【！】GISエラー: ${err.message || 'Unknown error'}`);
+                    addLog(`【❌】GISエラー: ${err.message || 'Unknown error'}`);
                 }
             });
-            client.requestAccessToken();
+            client.requestAccessToken({ prompt: 'consent' }); // 確実に同意画面を出す
         } catch (err: any) {
-            addLog(`【！】例外発生: ${err.message}`);
+            addLog(`【❌】例外発生: ${err.message}`);
             console.error(err);
         }
     };
@@ -174,6 +181,23 @@ const NexusProfileFactory: React.FC = () => {
                         Active ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID || 'NONE'}
                     </div>
                 </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,165,0,0.05)', border: '1px dashed rgba(255,165,0,0.3)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'orange', marginBottom: '0.5rem' }}>GOOGLE CLOUD 設定用情報</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                    <code style={{ fontSize: '0.7rem', color: 'orange', wordBreak: 'break-all' }}>{window.location.origin}</code>
+                    <button
+                        onClick={() => {
+                            navigator.clipboard.writeText(window.location.origin);
+                            alert("URLをコピーしました！これを Google Cloud の '承認済みの JavaScript オリジン' に貼り付けてください。");
+                        }}
+                        style={{ background: 'orange', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800, cursor: 'pointer' }}
+                    >
+                        URLをコピー
+                    </button>
+                </div>
+                <p style={{ fontSize: '0.6rem', marginTop: '8px', opacity: 0.7 }}>※このURLが Google Cloud 側で許可されていないと 400 エラーになります。</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
