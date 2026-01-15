@@ -168,8 +168,11 @@ const NexusProfileFactory: React.FC = () => {
                 <div>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>Nexus Profile Factory</h2>
                     <p style={{ fontSize: '0.7rem', opacity: 0.6, margin: 0 }}>
-                        環境変数状態: {import.meta.env.VITE_GOOGLE_CLIENT_ID ? '⭕️ID設定済' : '❌ID未設定'} / {import.meta.env.VITE_GEMINI_API_KEY ? '⭕️AI設定済' : '❌AI未設定'}
+                        環境変数状態: {import.meta.env.VITE_GOOGLE_CLIENT_ID ? '⭕️ID設定済' : '❌ID未設定'} / {import.meta.env.VITE_GEMINI_API_KEY ? '⭕️AI設定済' : '❌AI設定済'}
                     </p>
+                    <div style={{ fontSize: '0.6rem', opacity: 0.4, marginTop: '4px', wordBreak: 'break-all' }}>
+                        Active ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID || 'NONE'}
+                    </div>
                 </div>
             </div>
 
