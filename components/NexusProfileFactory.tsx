@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+import { Play, Settings, Database, CheckCircle, AlertCircle, Loader2, Shield } from 'lucide-react';
 import { NexusProfileFactory as FactoryService } from '../services/factoryService';
 
 const NexusProfileFactory: React.FC = () => {
