@@ -86,6 +86,12 @@ const NexusProfileFactory: React.FC = () => {
                 const profile = await service.executeGeminiFlow(item);
                 addLog(`人格生成完了: ${profile.accountName}`);
 
+                // 1.5 Image Generation
+                addLog(`画像描画中: ${profile.accountName} のビジュアルを生成しています...`);
+                const driveLink = await service.generateAndSaveImage(profile.visualBlueprint, `${profile.accountName}_Nexus`);
+                profile.driveLink = driveLink;
+                addLog(`画像保存完了: Google Driveへの配備に成功しました。`);
+
                 // 2. Finalize
                 await service.finalizeProcess(profile, item.rowIndex);
                 addLog(`同期完了: ${item.name} のトリガーを解除しました。`);
