@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // Google Cloud で発行した クライアントID
       'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('2857768732-0211p2kcio5mscjk8aho6i0qrb6l033c.apps.googleusercontent.com'),
-      // Gemini API Key
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify('AIzaSyCnkwipJyZNJFRE5OjfRaDHMbkc-sOBygQ'),
+      // Gemini API Key (Fresh key with available quota)
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify('AIzaSyBmxYBcRrFkl6rhGF90KxTCQDo_KwlLWyQ'),
       // Google Client Secret
       'import.meta.env.VITE_GOOGLE_CLIENT_SECRET': JSON.stringify('GOCSPX-HdaZnc1xkcVQpAHEH52v--aWkoV'),
     },
