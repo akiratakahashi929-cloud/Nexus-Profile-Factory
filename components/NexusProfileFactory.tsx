@@ -15,17 +15,40 @@ const NexusProfileFactory: React.FC = () => {
     };
 
     const handleGoogleLogin = () => {
-        const client = (window as any).google.accounts.oauth2.initTokenClient({
-            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
-            callback: (response: any) => {
-                if (response.access_token) {
-                    setGoogleToken(response.access_token);
-                    addLog("Google 認証成功。ファクトリーの制御権を取得しました。");
+        if (!window.google || !window.google.accounts) {
+            addLog("【！】Google 認証ライブラリが読み込まれていません。ページをリロードしてください。");
+            alert("Google 認証ライブラリがまだ読み込まれていないか、広告ブロック等で遮断されています。");
+            return;
+        }
+
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        if (!clientId) {
+            addLog("【！】VITE_GOOGLE_CLIENT_ID が設定されていません。Vercelの環境変数を確認してください。");
+            alert("システムエラー: クライアントIDが未設定です。管理者に連絡してください。");
+            return;
+        }
+
+        try {
+            const client = (window as any).google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
+                callback: (response: any) => {
+                    if (response.access_token) {
+                        setGoogleToken(response.access_token);
+                        addLog("Google 認証成功。ファクトリーの制御権を取得しました。");
+                    } else if (response.error) {
+                        addLog(`【！】認証エラー: ${response.error}`);
+                    }
+                },
+                error_callback: (err: any) => {
+                    addLog(`【！】GISエラー: ${err.message || 'Unknown error'}`);
                 }
-            },
-        });
-        client.requestAccessToken();
+            });
+            client.requestAccessToken();
+        } catch (err: any) {
+            addLog(`【！】例外発生: ${err.message}`);
+            console.error(err);
+        }
     };
 
     const startAutomation = async () => {
