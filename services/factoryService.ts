@@ -119,28 +119,75 @@ Step 1の結果 [${parts[4]}] に基づき、スマホ物販仕様の Nexus Visu
     }
 
     /**
-     * 画像をGoogle Driveに保存
+     * Geminiによる画像生成とGoogle Driveへの自動保存
      */
-    async saveImageToDrive(imageBuffer: any, fileName: string) {
-        // 注: ブラウザでのバッファ扱いは実装依存だが、ここではメタデータ作成のみ示す
+    async generateAndSaveImage(blueprint: string, fileName: string): Promise<string> {
+        // 1. Gemini 2.0 Flash による画像生成 (Base64取得)
+        const prompt = `超高品質なプロフェッショナル・ブランドビジュアル。
+        コンセプト: 【未来・知性・圧倒的収益】 
+        要素: ${blueprint} を中心に、デジタルフロー、粒子、ネオンシアンとマゼンタのアクセント、背景は洗練されたダークな質感を指定。
+        スタイル: 写実的かつデジタルアートの融合。テキストは含めず、ビジュアルの象徴性だけで「本物」を予感させる。`;
+
+        const imageResult = await this.ai.models.generateContent({
+            model: "gemini-2.0-flash-exp",
+            contents: [{ parts: [{ text: prompt }] }]
+        });
+
+        // 2026年仕様: インラインデータからBase64を取得
+        const imagePart = imageResult.response?.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+        if (!imagePart?.inlineData?.data) {
+            throw new Error("Gemini 2.0 による画像生成に失敗しました。設計図が複雑すぎるか、API制限の可能性があります。");
+        }
+
+        const base64Data = imagePart.inlineData.data;
+        const mimeType = 'image/png';
+
+        // 2. Google Drive へのアップロード (マルチパート)
         const metadata = {
-            name: fileName,
-            parents: [DRIVE_FOLDER_ID],
+            name: `${fileName}.png`,
+            mimeType: mimeType,
+            parents: [DRIVE_FOLDER_ID]
         };
 
-        // 簡易実装のマルチパートアップロード(実際には複雑なバイナリ構築が必要)
-        // ここではメタデータ作成のみ行い、将来的にバイナリ対応を想定
-        const url = 'https://www.googleapis.com/drive/v3/files?uploadType=multipart';
+        const boundary = '-------314159265358979323846';
+        const delimiter = "\r\n--" + boundary + "\r\n";
+        const close_delim = "\r\n--" + boundary + "--";
 
-        // 権限設定
-        const file = await this.callGoogleAPI('https://www.googleapis.com/drive/v3/files', 'POST', metadata);
+        const multipartBody =
+            delimiter +
+            'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+            JSON.stringify(metadata) +
+            delimiter +
+            'Content-Type: ' + mimeType + '\r\n' +
+            'Content-Transfer-Encoding: base64\r\n\r\n' +
+            base64Data +
+            close_delim;
 
+        const uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        const response = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': `multipart/related; boundary=${boundary}`,
+            },
+            body: multipartBody
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(`Drive Upload Error: ${err.error?.message || response.statusText}`);
+        }
+
+        const file = await response.json();
+
+        // 3. 全員に閲覧権限を付与
         await this.callGoogleAPI(`https://www.googleapis.com/drive/v3/files/${file.id}/permissions`, 'POST', {
             role: 'reader',
             type: 'anyone',
         });
 
-        return `https://drive.google.com/file/d/${file.id}/view`;
+        // 直接URLを取得可能にする
+        return `https://drive.google.com/uc?export=view&id=${file.id}`;
     }
 
     /**
