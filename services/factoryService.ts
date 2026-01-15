@@ -25,10 +25,16 @@ export interface NexusProfile {
 export class NexusProfileFactory {
     private ai: any;
     private token: string;
+    private logHandler?: (msg: string) => void;
 
-    constructor(apiKey: string, googleToken: string) {
+    constructor(apiKey: string, googleToken: string, logHandler?: (msg: string) => void) {
         this.ai = new GoogleGenAI({ apiKey });
         this.token = googleToken;
+        this.logHandler = logHandler;
+    }
+
+    private addLog(msg: string) {
+        if (this.logHandler) this.logHandler(msg);
     }
 
     private async callGoogleAPI(url: string, method: string = 'GET', body: any = null) {
@@ -54,18 +60,37 @@ export class NexusProfileFactory {
      * シートaから「チェックボックスがTRUE」かつ「未処理」の行を抽出する
      */
     async loadTriggeredSeedsFromSheetA() {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_A_NAME)}!A2:D`;
+        // A2:Z まで広めに取得して列のズレを確認
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_A_NAME)}!A2:Z`;
         const data = await this.callGoogleAPI(url);
         const rows = data.values || [];
 
+        if (rows.length === 0) {
+            this.addLog("【！】シートデータが空件でした（A2以降にデータがありません）");
+            return [];
+        }
+
+        this.addLog(`スキャン中: 合計 ${rows.length} 行のデータを取得しました。`);
+
         return rows
-            .map((row: any, index: number) => ({
-                gmail: row[0],
-                seed: row[1],
-                name: row[2],
-                isTriggered: row[3] === 'TRUE',
-                rowIndex: index + 2
-            }))
+            .map((row: any, index: number) => {
+                // デバッグ用：最初の数行について内容を出力
+                if (index < 3) {
+                    this.addLog(`DEBUG [Row ${index + 2}]: Cols=${row.length} Data=[${row.join('|')}]`);
+                }
+
+                // チェックボックスは通常 'TRUE' 文字列として返るが、
+                // 万が一のズレを考慮して D列(row[3]) 以外もチェック可能に
+                const isTriggered = row.some((cell: any) => cell === 'TRUE');
+
+                return {
+                    gmail: row[0] || "",
+                    seed: row[1] || "",
+                    name: row[2] || "不明なユーザー",
+                    isTriggered: isTriggered,
+                    rowIndex: index + 2
+                };
+            })
             .filter((item: any) => item.isTriggered);
     }
 

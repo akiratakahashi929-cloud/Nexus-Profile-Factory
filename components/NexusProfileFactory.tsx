@@ -65,9 +65,9 @@ const NexusProfileFactory: React.FC = () => {
         setProgress(10);
 
         try {
-            const service = new FactoryService(import.meta.env.VITE_GEMINI_API_KEY, googleToken);
+            const service = new FactoryService(import.meta.env.VITE_GEMINI_API_KEY, googleToken, addLog);
 
-            addLog("ハック開始: シートa 'X:運用者管理' からチェックボックスがONの行をスキャン中...");
+            addLog("ハック開始: シート 'X:運用者管理' をスキャンしてチェックボックス(ON)を探しています...");
             const triggeredItems = await service.loadTriggeredSeedsFromSheetA();
 
             if (triggeredItems.length === 0) {
