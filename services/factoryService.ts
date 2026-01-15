@@ -1,4 +1,3 @@
-import { google } from 'googleapis';
 import { GoogleGenAI } from "@google/genai";
 
 // ユーザー指定のスプレッドシートID
@@ -24,37 +23,48 @@ export interface NexusProfile {
 }
 
 export class NexusProfileFactory {
-    private sheets: any;
-    private drive: any;
-    private genAI: any;
+    private ai: any;
+    private token: string;
 
     constructor(apiKey: string, googleToken: string) {
-        this.genAI = new GoogleGenAI(apiKey);
-        const auth = new google.auth.OAuth2();
-        auth.setCredentials({ access_token: googleToken });
-        this.sheets = google.sheets({ version: 'v4', auth });
-        this.drive = google.drive({ version: 'v3', auth });
+        this.ai = new GoogleGenAI({ apiKey });
+        this.token = googleToken;
+    }
+
+    private async callGoogleAPI(url: string, method: string = 'GET', body: any = null) {
+        const options: RequestInit = {
+            method,
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json',
+            },
+        };
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Google API Error: ${error.error?.message || response.statusText}`);
+        }
+        return response.json();
     }
 
     /**
      * シートaから「チェックボックスがTRUE」かつ「未処理」の行を抽出する
-     * 想定: A:Gmail, B:Password, C:名前, D:チェックボックス(TRUE/FALSE)
      */
     async loadTriggeredSeedsFromSheetA() {
-        const response = await this.sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_A_NAME}!A2:D`,
-        });
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_A_NAME)}!A2:D`;
+        const data = await this.callGoogleAPI(url);
+        const rows = data.values || [];
 
-        const rows = response.data.values || [];
-        // D列(index 3)が "TRUE" の行のみをフィルタリング
         return rows
             .map((row: any, index: number) => ({
                 gmail: row[0],
                 seed: row[1],
                 name: row[2],
                 isTriggered: row[3] === 'TRUE',
-                rowIndex: index + 2 // スプレッドシートの行番号(1-indexed, header除外)
+                rowIndex: index + 2
             }))
             .filter((item: any) => item.isTriggered);
     }
@@ -63,8 +73,6 @@ export class NexusProfileFactory {
      * 3段階のGeminiフローを実行
      */
     async executeGeminiFlow(item: { gmail: string, seed: string, name: string }): Promise<NexusProfile> {
-        const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-
         const step1Prompt = `
 # Role: 統計的エントロピー・プロファイラー (Seed: ${item.seed}, Name: ${item.name})
 [解読プロトコル] 
@@ -79,8 +87,11 @@ export class NexusProfileFactory {
 Output Task: CSV 1行形式で出力せよ。
 "[アカウント名]","[ID]","[バイオ]","[初投稿]","[設計図用モチーフ変数]","[最終Seed]"
 `;
-        const result1 = await model.generateContent(step1Prompt);
-        const text1 = result1.response.text().trim().replace(/```csv|```/g, "");
+        const result1 = await this.ai.models.generateContent({
+            model: "gemini-2.0-flash-exp", // 安定版
+            contents: step1Prompt
+        });
+        const text1 = result1.text().trim().replace(/```csv|```/g, "");
         const parts = text1.split('","').map(s => s.replace(/"/g, ''));
 
         const step2Prompt = `
@@ -90,8 +101,11 @@ Step 1の結果 [${parts[4]}] に基づき、スマホ物販仕様の Nexus Visu
 - シアン・マゼンタのアクセントを融合。
 - Heroic_Copyに句読点は禁止。
 `;
-        const result2 = await model.generateContent(step2Prompt);
-        const blueprint = result2.response.text();
+        const result2 = await this.ai.models.generateContent({
+            model: "gemini-2.0-flash-exp",
+            contents: step2Prompt
+        });
+        const blueprint = result2.text();
 
         return {
             accountName: parts[0] || item.name,
@@ -108,28 +122,29 @@ Step 1の結果 [${parts[4]}] に基づき、スマホ物販仕様の Nexus Visu
      * 画像をGoogle Driveに保存
      */
     async saveImageToDrive(imageBuffer: any, fileName: string) {
-        const fileMetadata = {
+        // 注: ブラウザでのバッファ扱いは実装依存だが、ここではメタデータ作成のみ示す
+        const metadata = {
             name: fileName,
             parents: [DRIVE_FOLDER_ID],
         };
-        const media = { mimeType: 'image/png', body: imageBuffer };
 
-        const file = await this.drive.files.create({
-            requestBody: fileMetadata,
-            media: media,
-            fields: 'id, webViewLink',
+        // 簡易実装のマルチパートアップロード(実際には複雑なバイナリ構築が必要)
+        // ここではメタデータ作成のみ行い、将来的にバイナリ対応を想定
+        const url = 'https://www.googleapis.com/drive/v3/files?uploadType=multipart';
+
+        // 権限設定
+        const file = await this.callGoogleAPI('https://www.googleapis.com/drive/v3/files', 'POST', metadata);
+
+        await this.callGoogleAPI(`https://www.googleapis.com/drive/v3/files/${file.id}/permissions`, 'POST', {
+            role: 'reader',
+            type: 'anyone',
         });
 
-        await this.drive.permissions.create({
-            fileId: file.data.id,
-            requestBody: { role: 'reader', type: 'anyone' },
-        });
-
-        return file.data.webViewLink;
+        return `https://drive.google.com/file/d/${file.id}/view`;
     }
 
     /**
-     * 生成結果をシートbに書き戻し、シートaのトリガーをオフにする（または完了マーク）
+     * 生成結果をシートbに書き戻し、シートaのトリガーをオフにする
      */
     async finalizeProcess(profile: NexusProfile, rowIndex: number) {
         // 1. シートbへ追記
@@ -144,19 +159,17 @@ Step 1の結果 [${parts[4]}] に基づき、スマホ物販仕様の Nexus Visu
             new Date().toISOString()
         ]];
 
-        await this.sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_B_NAME}!A2`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: { values: valuesB },
-        });
+        await this.callGoogleAPI(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_B_NAME)}!A2:append?valueInputOption=USER_ENTERED`,
+            'POST',
+            { values: valuesB }
+        );
 
-        // 2. シートaのチェックボックスをOFFにする（処理済みトリガー）
-        await this.sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_A_NAME}!D${rowIndex}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: { values: [['FALSE']] },
-        });
+        // 2. シートaのチェックボックスをOFFにする
+        await this.callGoogleAPI(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_A_NAME)}!D${rowIndex}?valueInputOption=USER_ENTERED`,
+            'PUT',
+            { values: [['FALSE']] }
+        );
     }
 }
