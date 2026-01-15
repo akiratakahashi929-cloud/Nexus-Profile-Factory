@@ -158,7 +158,9 @@ const NexusProfileFactory: React.FC = () => {
                 </div>
                 <div>
                     <h2 style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>Nexus Profile Factory</h2>
-                    <p style={{ fontSize: '0.7rem', opacity: 0.6, margin: 0 }}>全自動プロファイル生成・同期エンジン</p>
+                    <p style={{ fontSize: '0.7rem', opacity: 0.6, margin: 0 }}>
+                        環境変数状態: {import.meta.env.VITE_GOOGLE_CLIENT_ID ? '⭕️ID設定済' : '❌ID未設定'} / {import.meta.env.VITE_GEMINI_API_KEY ? '⭕️AI設定済' : '❌AI未設定'}
+                    </p>
                 </div>
             </div>
 
