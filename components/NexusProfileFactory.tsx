@@ -28,6 +28,9 @@ const NexusProfileFactory: React.FC = () => {
             return;
         }
 
+        addLog(`認証試行中... (オリジン: ${window.location.origin})`);
+        addLog("※このオリジンを Google Cloud Console の '承認済みの JavaScript オリジン' に登録する必要があります。");
+
         try {
             const client = (window as any).google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
