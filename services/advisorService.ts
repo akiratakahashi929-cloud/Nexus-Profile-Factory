@@ -28,7 +28,8 @@ export interface DiagnosisResult {
 }
 
 export const diagnoseXAccount = async (accountUrl: string, personality: any): Promise<DiagnosisResult> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    const ai = new GoogleGenAI({ apiKey });
 
     // Extract handle from URL for simulation
     const handle = accountUrl.split('/').pop()?.replace('@', '') || 'unknown';

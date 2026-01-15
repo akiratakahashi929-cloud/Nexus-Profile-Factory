@@ -3,7 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedPost, GenerationConfig } from "../types";
 
 export const generate2026OptimizedPosts = async (config: GenerationConfig): Promise<GeneratedPost[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  const ai = new GoogleGenAI({ apiKey });
 
   // Check for image generation command
   const shouldGenerateImage = config.theme.includes("画像あり") || config.theme.includes("/image");
