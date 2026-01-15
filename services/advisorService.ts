@@ -123,7 +123,8 @@ URL: ${accountUrl}
             }
         });
 
-        return JSON.parse(response.text || '{}') as DiagnosisResult;
+        const responseText = typeof response.text === 'function' ? response.text() : response.text;
+        return JSON.parse(responseText || '{}') as DiagnosisResult;
     } catch (error) {
         console.error("Diagnosis Error:", error);
         throw new Error("アカウント診断に失敗しました。URLを確認してください。");

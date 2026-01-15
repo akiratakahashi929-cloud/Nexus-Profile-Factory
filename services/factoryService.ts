@@ -91,7 +91,7 @@ Output Task: CSV 1行形式で出力せよ。
             model: "gemini-2.0-flash-exp", // 安定版
             contents: step1Prompt
         });
-        const text1 = result1.text().trim().replace(/```csv|```/g, "");
+        const text1 = (typeof result1.text === 'function' ? result1.text() : result1.text).trim().replace(/```csv|```/g, "");
         const parts = text1.split('","').map(s => s.replace(/"/g, ''));
 
         const step2Prompt = `
@@ -105,7 +105,7 @@ Step 1の結果 [${parts[4]}] に基づき、スマホ物販仕様の Nexus Visu
             model: "gemini-2.0-flash-exp",
             contents: step2Prompt
         });
-        const blueprint = result2.text();
+        const blueprint = typeof result2.text === 'function' ? result2.text() : result2.text;
 
         return {
             accountName: parts[0] || item.name,
