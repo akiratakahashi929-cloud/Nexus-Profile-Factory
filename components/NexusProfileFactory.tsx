@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Play, Settings, Database, CheckCircle, AlertCircle, Loader2, Shield } from 'lucide-react';
+import { NexusProfileFactory as FactoryService } from '../services/factoryService';
 
 const NexusProfileFactory: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [googleToken, setGoogleToken] = useState<string | null>(null);
     const [accessCode, setAccessCode] = useState("");
     const [logs, setLogs] = useState<string[]>([]);
     const [progress, setProgress] = useState(0);
@@ -12,34 +12,65 @@ const NexusProfileFactory: React.FC = () => {
         setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev]);
     };
 
+    const handleGoogleLogin = () => {
+        const client = (window as any).google.accounts.oauth2.initTokenClient({
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',
+            callback: (response: any) => {
+                if (response.access_token) {
+                    setGoogleToken(response.access_token);
+                    addLog("Google 認証成功。ファクトリーの制御権を取得しました。");
+                }
+            },
+        });
+        client.requestAccessToken();
+    };
+
     const startAutomation = async () => {
+        if (!googleToken) {
+            alert("先に Google 認証を完了させてください。");
+            return;
+        }
+
         setIsProcessing(true);
         addLog("プロセスを開始中...");
+        setProgress(10);
 
         try {
+            const service = new FactoryService(import.meta.env.VITE_GEMINI_API_KEY, googleToken);
+
             addLog("ハック開始: シートa 'X:運用者管理' からチェックボックスがONの行をスキャン中...");
-            await new Promise(r => setTimeout(r, 1000));
+            const triggeredItems = await service.loadTriggeredSeedsFromSheetA();
 
-            // 実際はここで loadTriggeredSeedsFromSheetA() を呼ぶ
-            addLog("ターゲット捕捉: 処理待ちの有効なSeedを検出しました。");
+            if (triggeredItems.length === 0) {
+                addLog("待機中: 処理対象のデータが見つかりませんでした。");
+                setProgress(100);
+                return;
+            }
 
-            addLog("Gemini 1.5 Pro 起動: 10,000,000通りの統計的エントロピーを適用中...");
-            setProgress(30);
-            await new Promise(r => setTimeout(r, 1500));
+            addLog(`ターゲット捕捉: ${triggeredItems.length}件の有効なエントリを検出。`);
 
-            addLog("ビジュアル設計図構築: シアン・マゼンタ・人格別背景色の統合中...");
-            setProgress(60);
-            await new Promise(r => setTimeout(r, 1000));
+            for (let i = 0; i < triggeredItems.length; i++) {
+                const item = triggeredItems[i];
+                const currentProgress = 10 + Math.floor((i / triggeredItems.length) * 80);
+                setProgress(currentProgress);
 
-            addLog("資産同期: Google Drive への自動保存と公開リンクを発行中...");
-            setProgress(90);
-            await new Promise(r => setTimeout(r, 1200));
+                addLog(`[${i + 1}/${triggeredItems.length}] ${item.name} のプロファイルを構築中...`);
 
-            addLog("同期完了: 'キャリクラ_Sync' への書き出しとトリガーのリセットに成功しました。");
+                // 1. Gemini Flow
+                const profile = await service.executeGeminiFlow(item);
+                addLog(`人格生成完了: ${profile.accountName}`);
+
+                // 2. Finalize
+                await service.finalizeProcess(profile, item.rowIndex);
+                addLog(`同期完了: ${item.name} のトリガーを解除しました。`);
+            }
+
             setProgress(100);
-            addLog("【SUCCESS】Nexus ネットワークにプロファイルが正常に配備されました。");
-        } catch (err) {
-            addLog("エラーが発生しました: " + err);
+            addLog("【SUCCESS】Nexus ネットワークに全プロファイルが正常に配備されました。");
+        } catch (err: any) {
+            addLog("エラーが発生しました: " + (err.message || err));
+            console.error(err);
         } finally {
             setIsProcessing(false);
         }
@@ -107,13 +138,29 @@ const NexusProfileFactory: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div className="status-item" style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem', borderRadius: '12px' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.5, marginBottom: '0.5rem' }}>読み込み元 (シートA)</div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>X:運用者管理</div>
-                </div>
-                <div className="status-item" style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem', borderRadius: '12px' }}>
-                    <div style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.5, marginBottom: '0.5rem' }}>書き出し先 (シートB)</div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>キャリクラ_Sync</div>
+                <button
+                    onClick={handleGoogleLogin}
+                    style={{
+                        background: googleToken ? 'rgba(0,255,153,0.1)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${googleToken ? '#00FF99' : 'rgba(255,255,255,0.1)'}`,
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                    }}
+                >
+                    <Shield size={20} color={googleToken ? '#00FF99' : 'var(--digital-flow-magenta)'} />
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800 }}>
+                        {googleToken ? "GOOGLE AUTH OK" : "GOOGLE AUTH REQUIRED"}
+                    </span>
+                </button>
+                <div className="status-item" style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.5, marginBottom: '0.2rem' }}>NETWORK STATUS</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--digital-flow-cyan)' }}>ENCRYPTED</div>
                 </div>
             </div>
 
@@ -134,7 +181,7 @@ const NexusProfileFactory: React.FC = () => {
 
             <button
                 onClick={startAutomation}
-                disabled={isProcessing}
+                disabled={isProcessing || !googleToken}
                 className="viral-button"
                 style={{
                     width: '100%',
@@ -143,7 +190,8 @@ const NexusProfileFactory: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '10px',
-                    fontSize: '1rem'
+                    fontSize: '1rem',
+                    opacity: (!googleToken || isProcessing) ? 0.5 : 1
                 }}
             >
                 {isProcessing ? <Loader2 className="animate-spin" /> : <Play size={20} />}
